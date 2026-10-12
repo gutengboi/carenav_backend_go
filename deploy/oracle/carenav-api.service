@@ -1,0 +1,29 @@
+[Unit]
+Description=CareNav Backend API (Docker)
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Restart=always
+RestartSec=5
+EnvironmentFile=/etc/carenav/api.env
+
+ExecStartPre=-/usr/bin/docker stop carenav-api
+ExecStartPre=-/usr/bin/docker rm carenav-api
+ExecStart=/usr/bin/docker run --rm --name carenav-api \
+  -p 3000:3000 \
+  -e PORT \
+  -e MONGO_URL \
+  -e JWT_SECRET \
+  -e SECRET \
+  -e RESET_TOKEN_SECRET \
+  -e STREAM_API_KEY \
+  -e STREAM_API_SECRET \
+  -e EMAIL_USER \
+  -e EMAIL_PASS \
+  carenav-backend-go:latest
+ExecStop=/usr/bin/docker stop carenav-api
+
+[Install]
+WantedBy=multi-user.target
