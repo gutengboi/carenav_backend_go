@@ -1,6 +1,6 @@
 module carenav_backend_go
 
-go 1.27.2
+go 1.27.1
 
 require (
 	github.com/GetStream/stream-chat-go/v6 v6.11.0
