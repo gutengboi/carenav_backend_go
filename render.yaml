@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: carenav-backend-go
+    runtime: go
+    plan: free
+    buildCommand: go build -o bin/api ./cmd/api
+    startCommand: ./bin/api
+    envVars:
+      - key: MONGO_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: SECRET
+        sync: false
+      - key: RESET_TOKEN_SECRET
+        sync: false
+      - key: STREAM_API_KEY
+        sync: false
+      - key: STREAM_API_SECRET
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false

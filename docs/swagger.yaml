@@ -1,0 +1,475 @@
+basePath: /
+definitions:
+  handlers.createDoctorRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  handlers.createPinRequest:
+    properties:
+      email:
+        type: string
+      pin:
+        type: string
+    type: object
+  handlers.forgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    type: object
+  handlers.loginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  handlers.registerRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  handlers.resetPasswordRequest:
+    properties:
+      email:
+        type: string
+      newPassword:
+        type: string
+      otp:
+        type: string
+    type: object
+  handlers.resetPinRequest:
+    properties:
+      email:
+        type: string
+      newPin:
+        type: string
+      otp:
+        type: string
+    type: object
+  handlers.verifyOtpRequest:
+    properties:
+      email:
+        type: string
+      otp:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Backend API for the CareNav application.
+  title: CareNav API
+  version: "1.0"
+paths:
+  /api/users/{id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete a user by ID
+      tags:
+      - users
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get a user by ID
+      tags:
+      - users
+  /create-doctor:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Doctor registration payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.createDoctorRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a doctor account
+      tags:
+      - doctor
+  /create-pin:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email + PIN
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.createPinRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a 4-digit PIN for a user
+      tags:
+      - pin
+  /doctor-login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email + password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Log in as a doctor
+      tags:
+      - doctor
+  /forgot-password:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.forgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Request a password reset OTP
+      tags:
+      - auth
+  /forgot-pin:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.forgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Request a PIN reset OTP
+      tags:
+      - pin
+  /login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email + password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Log in as a patient
+      tags:
+      - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Registration payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.registerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
+  /reset-password:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email, OTP, new password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.resetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reset password using an OTP
+      tags:
+      - auth
+  /reset-pin:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email, OTP, new PIN
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.resetPinRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Reset a PIN using an OTP
+      tags:
+      - pin
+  /verify-otp:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email + OTP
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.verifyOtpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Verify a standalone OTP (password/PIN reset flow)
+      tags:
+      - auth
+  /verify-pin:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email + PIN
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.createPinRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Verify a user's PIN
+      tags:
+      - pin
+  /verify-registration-Otp:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email + OTP
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.verifyOtpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Verify the OTP sent during registration
+      tags:
+      - auth
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and the JWT.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
