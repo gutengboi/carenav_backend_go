@@ -161,6 +161,7 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "User registered. OTP sent to your email for verification.",
+		"otp":     otp,
 	})
 }
 
@@ -359,7 +360,7 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "OTP sent to your email."})
+	c.JSON(http.StatusOK, gin.H{"message": "OTP sent to your email.", "otp": otp})
 }
 
 type resetPasswordRequest struct {
@@ -608,7 +609,7 @@ func (h *AuthHandler) ForgotPin(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "OTP sent to your email."})
+	c.JSON(http.StatusOK, gin.H{"message": "OTP sent to your email.", "otp": otp})
 }
 
 type resetPinRequest struct {
