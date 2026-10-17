@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -20,6 +21,7 @@ type Config struct {
 	StreamAPISecret  string
 	EmailUser        string
 	EmailPass        string
+	Debug            bool
 }
 
 func Load() (*Config, error) {
@@ -35,6 +37,7 @@ func Load() (*Config, error) {
 		StreamAPISecret:  os.Getenv("STREAM_API_SECRET"),
 		EmailUser:        os.Getenv("EMAIL_USER"),
 		EmailPass:        os.Getenv("EMAIL_PASS"),
+		Debug:            parseBool(os.Getenv("DEBUG")),
 	}
 
 	if cfg.MongoURL != "" {
@@ -67,6 +70,14 @@ func getEnv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func parseBool(v string) bool {
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		return false
+	}
+	return b
 }
 
 // dbNameFromURI mirrors what mongoose.connect(MONGO_URL) does implicitly:

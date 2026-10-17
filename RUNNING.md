@@ -16,6 +16,7 @@
 | `EMAIL_USER` | No | |
 | `EMAIL_PASS` | No | |
 | `PORT` | No | Defaults to `3000` |
+| `DEBUG` | No | Defaults to `false`. When `true`, OTP responses (register/forgot-password/forgot-pin) include the OTP directly for local testing against Mailtrap's sandbox. Must stay unset/`false` in any deployed environment. |
 
 No local database is needed — the app connects directly to the MongoDB Atlas cluster specified in `MONGO_URL`.
 

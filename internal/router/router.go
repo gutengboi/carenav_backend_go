@@ -41,11 +41,11 @@ func New(auth *handlers.AuthHandler, user *handlers.UserHandler) *gin.Engine {
 	r.POST("/create-doctor", auth.CreateDoctor)
 	r.POST("/doctor-login", auth.LoginDoctor)
 
-	// NOTE: matches src/routers/user.routes.ts exactly — these routes have
-	// no auth middleware in the original Node app (only /consultations
-	// does). Not adding auth here to avoid a silent behavior change; add
-	// middleware.AuthenticateToken(...) if/when that's deliberately fixed.
+	// NOTE: deliberately diverges from src/routers/user.routes.ts, which had
+	// no auth middleware here — these routes now require a bearer token and
+	// are restricted to the token's own user (see user.GetUser/DeleteUser).
 	usersGroup := r.Group("/api/users")
+	usersGroup.Use(middleware.AuthenticateToken(user.Users, auth.Cfg.JWTSecret))
 	usersGroup.GET("/:id", user.GetUser)
 	usersGroup.DELETE("/:id", user.DeleteUser)
 

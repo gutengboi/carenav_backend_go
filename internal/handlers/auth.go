@@ -103,7 +103,7 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	hashedPassword, err := cryptoutil.Encrypt(req.Password, h.Cfg.Secret)
+	hashedPassword, err := cryptoutil.Hash(req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "User registration failed."})
 		return
@@ -159,10 +159,11 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 		"<p>Your OTP for email verification is: <b>"+otp+"</b>.</p>",
 	)
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "User registered. OTP sent to your email for verification.",
-		"otp":     otp,
-	})
+	resp := gin.H{"message": "User registered. OTP sent to your email for verification."}
+	if h.Cfg.Debug {
+		resp["otp"] = otp
+	}
+	c.JSON(http.StatusCreated, resp)
 }
 
 type verifyOtpRequest struct {
@@ -275,10 +276,15 @@ func (h *AuthHandler) LoginUser(c *gin.Context) {
 		return
 	}
 
-	decrypted, err := cryptoutil.Decrypt(user.Password, h.Cfg.Secret)
-	if err != nil || decrypted != req.Password {
+	ok, needsRehash := cryptoutil.Verify(user.Password, req.Password, h.Cfg.Secret)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Wrong password."})
 		return
+	}
+	if needsRehash {
+		if newHash, herr := cryptoutil.Hash(req.Password); herr == nil {
+			_, _ = h.Users.UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{"$set": bson.M{"password": newHash, "updatedAt": time.Now()}})
+		}
 	}
 
 	appToken, err := h.signAppToken(&user, false)
@@ -360,7 +366,11 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "OTP sent to your email.", "otp": otp})
+	resp := gin.H{"message": "OTP sent to your email."}
+	if h.Cfg.Debug {
+		resp["otp"] = otp
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 type resetPasswordRequest struct {
@@ -410,7 +420,7 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	hashedPassword, err := cryptoutil.Encrypt(req.NewPassword, h.Cfg.Secret)
+	hashedPassword, err := cryptoutil.Hash(req.NewPassword)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Password reset failed."})
 		return
@@ -502,13 +512,13 @@ func (h *AuthHandler) CreatePin(c *gin.Context) {
 		return
 	}
 
-	encryptedPin, err := cryptoutil.Encrypt(req.Pin, h.Cfg.Secret)
+	hashedPin, err := cryptoutil.Hash(req.Pin)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create PIN."})
 		return
 	}
 
-	if _, err := h.Users.UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{"$set": bson.M{"pin": encryptedPin, "updatedAt": time.Now()}}); err != nil {
+	if _, err := h.Users.UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{"$set": bson.M{"pin": hashedPin, "updatedAt": time.Now()}}); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create PIN."})
 		return
 	}
@@ -546,10 +556,15 @@ func (h *AuthHandler) VerifyPin(c *gin.Context) {
 		return
 	}
 
-	decrypted, err := cryptoutil.Decrypt(user.Pin, h.Cfg.Secret)
-	if err != nil || decrypted != req.Pin {
+	ok, needsRehash := cryptoutil.Verify(user.Pin, req.Pin, h.Cfg.Secret)
+	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid PIN."})
 		return
+	}
+	if needsRehash {
+		if newHash, herr := cryptoutil.Hash(req.Pin); herr == nil {
+			_, _ = h.Users.UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{"$set": bson.M{"pin": newHash, "updatedAt": time.Now()}})
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "PIN verified successfully."})
@@ -609,7 +624,11 @@ func (h *AuthHandler) ForgotPin(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "OTP sent to your email.", "otp": otp})
+	resp := gin.H{"message": "OTP sent to your email."}
+	if h.Cfg.Debug {
+		resp["otp"] = otp
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 type resetPinRequest struct {
@@ -659,13 +678,13 @@ func (h *AuthHandler) ResetPin(c *gin.Context) {
 		return
 	}
 
-	encryptedPin, err := cryptoutil.Encrypt(req.NewPin, h.Cfg.Secret)
+	hashedPin, err := cryptoutil.Hash(req.NewPin)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reset PIN."})
 		return
 	}
 
-	if _, err := h.Users.UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{"$set": bson.M{"pin": encryptedPin, "updatedAt": time.Now()}}); err != nil {
+	if _, err := h.Users.UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{"$set": bson.M{"pin": hashedPin, "updatedAt": time.Now()}}); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reset PIN."})
 		return
 	}
@@ -790,10 +809,15 @@ func (h *AuthHandler) LoginDoctor(c *gin.Context) {
 		return
 	}
 
-	decrypted, err := cryptoutil.Decrypt(user.Password, h.Cfg.Secret)
-	if err != nil || decrypted != req.Password {
+	ok, needsRehash := cryptoutil.Verify(user.Password, req.Password, h.Cfg.Secret)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid email or password."})
 		return
+	}
+	if needsRehash {
+		if newHash, herr := cryptoutil.Hash(req.Password); herr == nil {
+			_, _ = h.Users.UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{"$set": bson.M{"password": newHash, "updatedAt": time.Now()}})
+		}
 	}
 
 	appToken, err := h.signAppToken(&user, true)

@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"carenav_backend_go/internal/middleware"
 	"carenav_backend_go/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -34,6 +35,11 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 		return
 	}
 
+	if current := middleware.CurrentUser(c); current == nil || current.ID != oid {
+		c.JSON(http.StatusForbidden, gin.H{"message": "Access denied."})
+		return
+	}
+
 	ctx, cancel := reqCtx(c)
 	defer cancel()
 
@@ -58,6 +64,11 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	oid, err := bson.ObjectIDFromHex(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "User not found"})
+		return
+	}
+
+	if current := middleware.CurrentUser(c); current == nil || current.ID != oid {
+		c.JSON(http.StatusForbidden, gin.H{"message": "Access denied."})
 		return
 	}
 
