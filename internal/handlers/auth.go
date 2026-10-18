@@ -23,6 +23,7 @@ import (
 type AuthHandler struct {
 	Users       *mongo.Collection
 	ResetTokens *mongo.Collection
+	Doctors     *mongo.Collection
 	Stream      *streamchat.Client
 	Mailer      *mail.Mailer
 	Cfg         *config.Config
@@ -32,6 +33,7 @@ func NewAuthHandler(db *mongo.Database, stream *streamchat.Client, mailer *mail.
 	return &AuthHandler{
 		Users:       db.Collection(models.UsersCollection),
 		ResetTokens: db.Collection(models.ResetTokensCollection),
+		Doctors:     db.Collection(models.DoctorsCollection),
 		Stream:      stream,
 		Mailer:      mailer,
 		Cfg:         cfg,
@@ -115,7 +117,7 @@ func (h *AuthHandler) RegisterUser(c *gin.Context) {
 		Password:   hashedPassword,
 		Username:   req.Username,
 		IsVerified: false,
-		Role:       models.RolePatient,
+		Role:       models.UserRole(req.Role),
 		CreatedAt:  now,
 		UpdatedAt:  now,
 	}
@@ -226,11 +228,12 @@ type loginRequest struct {
 
 func userResponse(u *models.User) gin.H {
 	return gin.H{
-		"_id":        u.ID,
-		"username":   u.Username,
-		"email":      u.Email,
-		"isVerified": u.IsVerified,
-		"role":       u.Role,
+		"_id":         u.ID,
+		"username":    u.Username,
+		"email":       u.Email,
+		"isVerified":  u.IsVerified,
+		"role":        u.Role,
+		"lastLoginAt": u.LastLoginAt,
 	}
 }
 
@@ -281,11 +284,15 @@ func (h *AuthHandler) LoginUser(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Wrong password."})
 		return
 	}
+
+	now := time.Now()
+	update := bson.M{"lastLoginAt": now, "updatedAt": now}
 	if needsRehash {
 		if newHash, herr := cryptoutil.Hash(req.Password); herr == nil {
-			_, _ = h.Users.UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{"$set": bson.M{"password": newHash, "updatedAt": time.Now()}})
+			update["password"] = newHash
 		}
 	}
+	_, _ = h.Users.UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{"$set": update})
 
 	appToken, err := h.signAppToken(&user, false)
 	if err != nil {
@@ -771,6 +778,21 @@ func (h *AuthHandler) CreateDoctor(c *gin.Context) {
 		return
 	}
 
+	// Link this login account to a bookable directory entry so patients can
+	// find/book this doctor and the doctor's own dashboard can find their
+	// consultations.
+	if _, err := h.Doctors.InsertOne(ctx, models.Doctor{
+		UserID:    &doctorID,
+		Name:      req.Username,
+		Specialty: "General Practice",
+		Rating:    0,
+		ImageURL:  "",
+		CreatedAt: now,
+	}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "An error occurred while creating the doctor account."})
+		return
+	}
+
 	c.JSON(http.StatusCreated, gin.H{"message": "Doctor account created successfully."})
 }
 
@@ -814,11 +836,15 @@ func (h *AuthHandler) LoginDoctor(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid email or password."})
 		return
 	}
+
+	now := time.Now()
+	update := bson.M{"lastLoginAt": now, "updatedAt": now}
 	if needsRehash {
 		if newHash, herr := cryptoutil.Hash(req.Password); herr == nil {
-			_, _ = h.Users.UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{"$set": bson.M{"password": newHash, "updatedAt": time.Now()}})
+			update["password"] = newHash
 		}
 	}
+	_, _ = h.Users.UpdateOne(ctx, bson.M{"_id": user.ID}, bson.M{"$set": update})
 
 	appToken, err := h.signAppToken(&user, true)
 	if err != nil {

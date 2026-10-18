@@ -19,14 +19,15 @@ const (
 )
 
 type Consultation struct {
-	ID        bson.ObjectID      `bson:"_id,omitempty"`
-	PatientID bson.ObjectID      `bson:"patientId"`
-	DoctorID  bson.ObjectID      `bson:"doctorId"`
-	DateTime  time.Time          `bson:"dateTime"`
-	Status    ConsultationStatus `bson:"status"`
-	Notes     string             `bson:"notes,omitempty"`
-	CreatedAt time.Time          `bson:"createdAt"`
-	UpdatedAt time.Time          `bson:"updatedAt"`
+	ID           bson.ObjectID      `bson:"_id,omitempty"`
+	PatientID    bson.ObjectID      `bson:"patientId"`
+	DoctorID     bson.ObjectID      `bson:"doctorId"`
+	DateTime     time.Time          `bson:"dateTime"`
+	Status       ConsultationStatus `bson:"status"`
+	Notes        string             `bson:"notes,omitempty"`
+	CancelReason string             `bson:"cancelReason,omitempty"`
+	CreatedAt    time.Time          `bson:"createdAt"`
+	UpdatedAt    time.Time          `bson:"updatedAt"`
 }
 
 const ConsultationsCollection = "consultations"

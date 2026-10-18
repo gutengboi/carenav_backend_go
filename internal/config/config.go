@@ -21,6 +21,8 @@ type Config struct {
 	StreamAPISecret  string
 	EmailUser        string
 	EmailPass        string
+	AdminEmail       string
+	AdminPassword    string
 	Debug            bool
 }
 
@@ -37,6 +39,8 @@ func Load() (*Config, error) {
 		StreamAPISecret:  os.Getenv("STREAM_API_SECRET"),
 		EmailUser:        os.Getenv("EMAIL_USER"),
 		EmailPass:        os.Getenv("EMAIL_PASS"),
+		AdminEmail:       os.Getenv("ADMIN_EMAIL"),
+		AdminPassword:    os.Getenv("ADMIN_PASSWORD"),
 		Debug:            parseBool(os.Getenv("DEBUG")),
 	}
 

@@ -11,6 +11,7 @@ type UserRole string
 const (
 	RoleDoctor  UserRole = "doctor"
 	RolePatient UserRole = "patient"
+	RoleAdmin   UserRole = "admin"
 )
 
 // User matches the documents in the "users" collection created by the
@@ -26,6 +27,7 @@ type User struct {
 	PasswordResetToken   string        `bson:"passwordResetToken,omitempty" json:"-"`
 	PasswordResetExpires *time.Time    `bson:"passwordResetExpires,omitempty" json:"-"`
 	Pin                  string        `bson:"pin,omitempty" json:"-"`
+	LastLoginAt          *time.Time    `bson:"lastLoginAt,omitempty" json:"-"`
 	CreatedAt            time.Time     `bson:"createdAt" json:"-"`
 	UpdatedAt            time.Time     `bson:"updatedAt" json:"-"`
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"carenav_backend_go/internal/middleware"
 	"carenav_backend_go/internal/models"
@@ -50,6 +51,50 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, userResponse(&user))
+}
+
+// doctorAccountResponse is what the admin UI's doctor list renders.
+type doctorAccountResponse struct {
+	ID        bson.ObjectID `json:"id"`
+	Username  string        `json:"username"`
+	Email     string        `json:"email"`
+	CreatedAt time.Time     `json:"createdAt"`
+}
+
+// ListDoctorAccounts godoc
+// @Summary		List all doctor accounts (admin only)
+// @Tags			admin
+// @Produce		json
+// @Success		200	{array}		doctorAccountResponse
+// @Router			/api/admin/doctors [get]
+func (h *UserHandler) ListDoctorAccounts(c *gin.Context) {
+	ctx, cancel := reqCtx(c)
+	defer cancel()
+
+	cursor, err := h.Users.Find(ctx, bson.M{"role": models.RoleDoctor})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to load doctors."})
+		return
+	}
+	defer cursor.Close(ctx)
+
+	users := []models.User{}
+	if err := cursor.All(ctx, &users); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to load doctors."})
+		return
+	}
+
+	responses := make([]doctorAccountResponse, 0, len(users))
+	for _, u := range users {
+		responses = append(responses, doctorAccountResponse{
+			ID:        u.ID,
+			Username:  u.Username,
+			Email:     u.Email,
+			CreatedAt: u.CreatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, responses)
 }
 
 // DeleteUser godoc

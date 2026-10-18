@@ -35,6 +35,13 @@ func main() {
 
 	database := client.Database(cfg.MongoDBName)
 
+	if err := db.SeedIfEmpty(context.Background(), database); err != nil {
+		log.Fatalf("seed error: %v", err)
+	}
+	if err := db.SeedAdminIfEmpty(context.Background(), database, cfg.AdminEmail, cfg.AdminPassword); err != nil {
+		log.Fatalf("admin seed error: %v", err)
+	}
+
 	stream, err := streamchat.New(cfg.StreamAPIKey, cfg.StreamAPISecret)
 	if err != nil {
 		log.Fatalf("stream client error: %v", err)
@@ -44,8 +51,31 @@ func main() {
 
 	authHandler := handlers.NewAuthHandler(database, stream, mailer, cfg)
 	userHandler := handlers.NewUserHandler(database)
+	doctorHandler := handlers.NewDoctorHandler(database)
+	consultationHandler := handlers.NewConsultationHandler(database)
+	medicineHandler := handlers.NewMedicineHandler(database)
+	labTestHandler := handlers.NewLabTestHandler(database)
+	pastMedicationHandler := handlers.NewPastMedicationHandler(database)
+	medicalHistoryHandler := handlers.NewMedicalHistoryHandler(database)
+	medicalReportHandler := handlers.NewMedicalReportHandler(database)
+	allergyHandler := handlers.NewAllergyHandler(database)
+	pharmacyHandler := handlers.NewPharmacyHandler(database)
+	vitalsHandler := handlers.NewVitalsHandler(database)
 
-	r := router.New(authHandler, userHandler)
+	r := router.New(
+		authHandler,
+		userHandler,
+		doctorHandler,
+		consultationHandler,
+		medicineHandler,
+		labTestHandler,
+		pastMedicationHandler,
+		medicalHistoryHandler,
+		medicalReportHandler,
+		allergyHandler,
+		pharmacyHandler,
+		vitalsHandler,
+	)
 
 	log.Printf("Server is listening on port %s", cfg.Port)
 	if err := r.Run(":" + cfg.Port); err != nil {
